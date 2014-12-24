@@ -48,6 +48,7 @@ public class BackupChecker {
 	
 	public boolean check() throws IOException {
 		LocalDate yesterday = LocalDate.now().minusDays(1);
+		l.i("yesterday is: "+ yesterday.toString());
 		
 		Predicate<Path> validos = new Predicate<Path>() {
 			@Override
@@ -57,8 +58,9 @@ public class BackupChecker {
 		    	BasicFileAttributes attr;
 				try {
 					attr = Files.getFileAttributeView(p, BasicFileAttributeView.class).readAttributes();
-					Instant i = attr.creationTime().toInstant();
+					Instant i = attr.lastModifiedTime().toInstant();
 					LocalDate res = LocalDateTime.ofInstant(i, ZoneId.systemDefault()).toLocalDate();
+					l.i("file "+ p.getFileName().toString() +" date is "+ res.toString());
 
 					boolean ofYesterday = res.equals(yesterday);
 			    	
@@ -74,6 +76,9 @@ public class BackupChecker {
 										.filter(validos)
 										.collect(Collectors.toList());
 
+		l.i("found files: "+ foundFiles.stream().map(p -> p.getFileName().toString()).collect(Collectors.joining(", ")));
+		l.i("backup items: "+ backupItems.stream().collect(Collectors.joining(", ")));
+		
 		boolean result = backupItems.stream()
 									.allMatch(item -> foundFiles.stream()
 																.anyMatch(p -> p.getFileName().toString().contains(item)));
